@@ -2,10 +2,13 @@ using UnityEngine;
 
 public class Cube : MonoBehaviour, ICellItem
 {
+    public CubeType cubeType;
+
     private Vector2Int gridPosition;
 
     public GameObject GameObject => gameObject;
     public string ItemType => "Cube";
+
     public Vector2Int GridPosition
     {
         get => gridPosition;
@@ -31,6 +34,7 @@ public class Cube : MonoBehaviour, ICellItem
 
     public void DestroyItem()
     {
-        Destroy(gameObject);
+        gameObject.SetActive(false);
+       // Destroy(gameObject);
     }
 }

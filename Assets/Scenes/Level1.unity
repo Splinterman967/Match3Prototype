@@ -832,10 +832,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4be337a24512c5f48936b11d02f636ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridWidth: 6
-  gridHeight: 6
-  cellSize: 1
-  gridOffset: {x: 0, y: 0}
+  width: 0
+  height: 0
+  cellSize: 0.5
   redCubePrefab: {fileID: 3876906819363013375, guid: 417c5ef6b6558de499995ad00f9c36cf, type: 3}
   greenCubePrefab: {fileID: 2752048074344572922, guid: 33a878c6da8c95f44a74c4acadce4ac6, type: 3}
   blueCubePrefab: {fileID: 972704041338704340, guid: b4b376e60f15d5546806b26a0d6723f7, type: 3}
@@ -850,7 +849,7 @@ Transform:
   m_GameObject: {fileID: 1991616832}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -1.99, y: -3.38, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

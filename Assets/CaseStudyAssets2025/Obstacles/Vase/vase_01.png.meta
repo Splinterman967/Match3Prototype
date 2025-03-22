@@ -120,7 +120,7 @@ TextureImporter:
         y: 0
         width: 138
         height: 152
-      alignment: 0
+      alignment: 6
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: d102a3872f76a4a4d8de2d904b0ed8ee
     internalID: 0
     vertices: []
     indices: 
@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      vase_01_0: -4678962038349899921
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
