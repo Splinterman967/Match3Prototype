@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum CubeType
+public enum CubeColor
 {
     Red,
     Green,

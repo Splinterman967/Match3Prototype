@@ -102,7 +102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd1784f250ff6ef499e3e15596f073be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeType: 1
+  cubeColor: 1
 --- !u!198 &7899235343670022535
 ParticleSystem:
   m_ObjectHideFlags: 0

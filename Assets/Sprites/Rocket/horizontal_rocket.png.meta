@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 319fd4c5d92849042a51589b82206f16
+guid: 59ddac40c5234ed498ed72d7e13c7101
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 51141016974189086
-    second: vertical_rocket_part_top_0
+      213: 1184650260280522132
+    second: horizontal_rocket_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -113,14 +113,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: vertical_rocket_part_top_0
+      name: horizontal_rocket_0
       rect:
         serializedVersion: 2
-        x: 14
-        y: 12
-        width: 113
-        height: 116
-      alignment: 0
+        x: 1
+        y: 22
+        width: 137
+        height: 97
+      alignment: 6
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e12e236eb70b5b000800000000000000
-      internalID: 51141016974189086
+      spriteID: 495381b9229b07010800000000000000
+      internalID: 1184650260280522132
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: a77dd80e5aff9e24281e628b318e8ed7
     internalID: 0
     vertices: []
     indices: 
@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      horizontal_rocket_0: 1184650260280522132
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
