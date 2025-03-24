@@ -6,6 +6,13 @@ public class Box : MonoBehaviour, ICellItem
 
     public GameObject GameObject => gameObject;
     public string ItemType => "Box";
+
+    [SerializeField] private ItemCode itemCode;
+    public ItemCode ItemCode
+    {
+        get => itemCode;
+        set => itemCode = value;
+    }
     public Vector2Int GridIndex
     {
         get => gridIndex;
@@ -30,13 +37,16 @@ public class Box : MonoBehaviour, ICellItem
 
     public void TakeDamage(int damage)
     {
-        DestroyItem(); // Box is cleared with 1 damage
+        health -= damage;
+        DestroyItem();
     }
 
     public void DestroyItem()
     {
-        gameObject.SetActive(false);
-       // Destroy(gameObject);
+        if (health <= 0)
+        {
+            GridManager.Instance.ClearItemAt(gridIndex.x, gridIndex.y);
+        }
     }
 
     public ICellItem[] GetNeighbours()
@@ -47,4 +57,7 @@ public class Box : MonoBehaviour, ICellItem
 
         return neighbourItems;
     }
+
+
+   
 }

@@ -18,6 +18,8 @@ public class GridManager : MonoBehaviour
     public GameObject blueCubePrefab;
     public GameObject yellowCubePrefab;
     public GameObject boxPrefab;
+    public GameObject stonePrefab;
+    public GameObject vasePrefab;
     public GameObject hRocketPrefab;
     public GameObject vRocketPrefab;
 
@@ -46,7 +48,7 @@ public class GridManager : MonoBehaviour
             ""grid_width"": 9,
             ""grid_height"": 10,
             ""move_count"": 20,
-            ""grid"": [""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""bo"", ""r"", ""r"", ""r"", ""r"", ""g"", ""b"", ""b"", ""b"", ""b"", ""y"", ""y"", ""y"", ""y"", ""g"", ""y"", ""y"", ""y"", ""y"", ""b"", ""b"", ""b"", ""b"", ""y"", ""r"", ""r"", ""r"", ""r"", ""rand"", ""rand"", ""rand"", ""rand"", ""y"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand""]
+            ""grid"": [""bo"", ""bo"", ""bo"", ""s"", ""s"", ""s"", ""v"", ""v"", ""bo"", ""bo"", ""bo"", ""bo"", ""s"", ""s"", ""bo"", ""bo"", ""s"", ""bo"", ""bo"", ""bo"", ""v"", ""v"", ""bo"", ""v"", ""bo"", ""bo"", ""bo"", ""r"", ""r"", ""r"", ""r"", ""g"", ""b"", ""b"", ""b"", ""b"", ""y"", ""y"", ""y"", ""y"", ""g"", ""y"", ""y"", ""y"", ""y"", ""b"", ""b"", ""b"", ""b"", ""y"", ""r"", ""r"", ""r"", ""r"", ""rand"", ""rand"", ""rand"", ""rand"", ""y"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand""]
         }";
         InitializeGrid(json);
     }
@@ -95,29 +97,31 @@ public class GridManager : MonoBehaviour
         switch (itemCode.ToLower())
         {
             case "r":
-                item = Instantiate(redCubePrefab, centerPos, Quaternion.identity, transform).AddComponent<Cube>();
-                item.GameObject.GetComponent<Cube>().cubeColor = CubeColor.Red;
+                item = Instantiate(redCubePrefab, centerPos, Quaternion.identity, transform).GetComponent<Cube>();
                 break;
             case "g":
-                item = Instantiate(greenCubePrefab, centerPos, Quaternion.identity, transform).AddComponent<Cube>();
-                item.GameObject.GetComponent<Cube>().cubeColor = CubeColor.Green;
+                item = Instantiate(greenCubePrefab, centerPos, Quaternion.identity, transform).GetComponent<Cube>();
                 break;
             case "b":
-                item = Instantiate(blueCubePrefab, centerPos, Quaternion.identity, transform).AddComponent<Cube>();
-                item.GameObject.GetComponent<Cube>().cubeColor = CubeColor.Blue;
+                item = Instantiate(blueCubePrefab, centerPos, Quaternion.identity, transform).GetComponent<Cube>();
                 break;
             case "y":
-                item = Instantiate(yellowCubePrefab, centerPos, Quaternion.identity, transform).AddComponent<Cube>();
-                item.GameObject.GetComponent<Cube>().cubeColor = CubeColor.Yellow;
+                item = Instantiate(yellowCubePrefab, centerPos, Quaternion.identity, transform).GetComponent<Cube>();
                 break;
             case "bo":
-                item = Instantiate(boxPrefab, centerPos, Quaternion.identity, transform).AddComponent<Box>();
+                item = Instantiate(boxPrefab, centerPos, Quaternion.identity, transform).GetComponent<Box>();
+                break;
+            case "s":
+                item = Instantiate(stonePrefab, centerPos, Quaternion.identity, transform).GetComponent<Stone>();
+                break;
+            case "v":
+                item = Instantiate(vasePrefab, centerPos, Quaternion.identity, transform).GetComponent<Vase>();
                 break;
             case "hro":
-                item = Instantiate(hRocketPrefab, centerPos, Quaternion.identity, transform).AddComponent<Rocket>();
+                item = Instantiate(hRocketPrefab, centerPos, Quaternion.identity, transform).GetComponent<Rocket>();
                 break;
             case "vro":
-                item = Instantiate(vRocketPrefab, centerPos, Quaternion.identity, transform).AddComponent<Rocket>();
+                item = Instantiate(vRocketPrefab, centerPos, Quaternion.identity, transform).GetComponent<Rocket>();
                 break;
             case "rand":
                 item = CreateRandomCube(centerPos);
@@ -129,22 +133,19 @@ public class GridManager : MonoBehaviour
 
         if (item != null)
         {
-
             SetItemAt(x, y, item);
-            //item.GridIndex = new Vector2Int(x, y);
-            //gridArray[x, y] = item;
-            //isGridOccupied[x, y] = true;
-            //item.GameObject.name = $"GridItem_{x}_{y}";
         }
     }
 
     private ICellItem CreateRandomCube(Vector3 centerPos)
     {
         GameObject[] cubePrefabs = { redCubePrefab, greenCubePrefab, blueCubePrefab, yellowCubePrefab };
-        CubeColor[] colors = { CubeColor.Red, CubeColor.Green, CubeColor.Blue, CubeColor.Yellow };
+        ItemCode[] colors = { ItemCode.r, ItemCode.g, ItemCode.b, ItemCode.y };
+
         int randomIndex = UnityEngine.Random.Range(0, cubePrefabs.Length);
+
         ICellItem item = Instantiate(cubePrefabs[randomIndex], centerPos, Quaternion.identity, transform).AddComponent<Cube>();
-        item.GameObject.GetComponent<Cube>().cubeColor = colors[randomIndex];
+        item.GameObject.GetComponent<Cube>().ItemCode = colors[randomIndex];
         return item;
     }
 
@@ -170,9 +171,14 @@ public class GridManager : MonoBehaviour
                         List<ICellItem> matches = FindMatches(gridIndex);
                         if (matches.Count >= 2)
                         {
+                            clickedItem.GameObject.GetComponent<Cube>().OnBlast();
+
                             foreach (ICellItem match in matches)
                             {
-                                ClearItemAt(match.GridIndex.x, match.GridIndex.y);
+                                match.GameObject.GetComponent<Cube>().OnBlast();
+
+                                match.TakeDamage(1);
+                                //ClearItemAt(match.GridIndex.x, match.GridIndex.y);
 
 
                             }
@@ -181,7 +187,17 @@ public class GridManager : MonoBehaviour
 
                         if (matches.Count >= 4)
                         {
-                            CreateItem(gridIndex.x, gridIndex.y, "hro");
+                            int randomIndex = UnityEngine.Random.Range(0, 2);
+
+                            if (randomIndex == 0)
+                            {
+                                CreateItem(gridIndex.x, gridIndex.y, "hro");
+
+                            }
+                            else if (randomIndex == 1)
+                            {
+                                CreateItem(gridIndex.x, gridIndex.y, "vro");
+                            }
 
                         }
 
@@ -189,35 +205,38 @@ public class GridManager : MonoBehaviour
                     }
 
                     //When Rocket Clicked
-                    else if (clickedItem.ItemType == "Rocket")
+                    else if (clickedItem.ItemCode == ItemCode.hro || clickedItem.ItemCode == ItemCode.vro)
                     {
-
-                        ////Horizontal Rocket
-                        //int Row = gridIndex.y;
-
-                        //for (int x = 0; x < width; x++)
-                        //{
-                        //    ICellItem item = GetItemAt(x, Row);
-                        //    item.TakeDamage(1);
-                        //   // ClearItemAt(item.GridIndex.x, Row);
-                        //}
-
-                        ////Clear the Rocket
-                        //ClearItemAt(gridIndex.x, gridIndex.y);
-
-
-                        //VerticalRocket
-                        int Cloumn = gridIndex.x;
-
-                        for (int y = 0; y < height; y++)
+                        if (clickedItem.ItemCode == ItemCode.hro)
                         {
-                            ICellItem item = GetItemAt(Cloumn, y);
-                            item.TakeDamage(1);
-                            ClearItemAt(Cloumn, item.GridIndex.y);
+                            //Horizontal Rocket
+                            int Row = gridIndex.y;
+
+                            for (int x = 0; x < width; x++)
+                            {
+                                ICellItem item = GetItemAt(x, Row);
+                                if (item != null)
+                                {
+                                    item.TakeDamage(1);
+                                }
+
+                            }
                         }
 
-                        //Clear the Rocket
-                        ClearItemAt(gridIndex.x, gridIndex.y);
+                        else if (clickedItem.ItemCode == ItemCode.vro)
+                        {
+                            //VerticalRocket
+                            int Cloumn = gridIndex.x;
+
+                            for (int y = 0; y < height; y++)
+                            {
+                                ICellItem item = GetItemAt(Cloumn, y);
+                                if (item != null)
+                                {
+                                    item.TakeDamage(1);
+                                }
+                            }
+                        }
 
                         moveCount--;
                     }
@@ -236,13 +255,13 @@ public class GridManager : MonoBehaviour
     {
         List<ICellItem> matches = new List<ICellItem>();
         HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
-        CubeColor targetColor = GetItemAt(startIndex.x, startIndex.y)?.GameObject.GetComponent<Cube>().cubeColor ?? CubeColor.Red;
+        ItemCode targetColor = GetItemAt(startIndex.x, startIndex.y)?.GameObject.GetComponent<Cube>().ItemCode ?? ItemCode.r;
 
         void CheckCell(int x, int y)
         {
             if (!IsValidPosition(x, y) || visited.Contains(new Vector2Int(x, y))) return;
             ICellItem item = GetItemAt(x, y);
-            if (item != null && item.ItemType == "Cube" && item.GameObject.GetComponent<Cube>().cubeColor == targetColor)
+            if (item != null && item.ItemType == "Cube" && item.GameObject.GetComponent<Cube>().ItemCode == targetColor)
             {
                 matches.Add(item);
                 visited.Add(new Vector2Int(x, y));
@@ -254,7 +273,7 @@ public class GridManager : MonoBehaviour
         return matches;
     }
 
-    private void Fall()
+    public void Fall()
     {
         float duration = 0.5f; // Animation duration in seconds
 
@@ -324,8 +343,10 @@ public class GridManager : MonoBehaviour
     {
         if (IsValidPosition(x, y) && gridArray[x, y] != null)
         {
-            Destroy(gridArray[x, y].GameObject); // Fully destroy the GameObject
+            //Destroy(gridArray[x, y].GameObject); // Fully destroy the GameObject
+            gridArray[x, y].GameObject.SetActive(false);
             gridArray[x, y] = null;
+
             isGridOccupied[x, y] = false;
         }
     }

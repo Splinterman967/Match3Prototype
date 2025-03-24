@@ -47,5 +47,8 @@ TagManager:
   - name: GamePlay
     uniqueID: 428710513
     locked: 0
+  - name: Effects
+    uniqueID: 2781750961
+    locked: 0
   m_RenderingLayers:
   - Default

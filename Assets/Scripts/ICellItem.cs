@@ -6,6 +6,8 @@ public interface ICellItem
 
     string ItemType { get; }
 
+    ItemCode ItemCode { get; set; }
+
     int Health { get; set; }
 
     Vector2Int GridIndex { get; set; }
