@@ -41,17 +41,17 @@ public class Cube : MonoBehaviour, ICellItem
         {
             foreach (ICellItem item in neihbours)
             {
-                if (item != null && item.ItemType == "Box")
+                if (item != null && item.ItemCode==ItemCode.bo)
                 {
                     item.TakeDamage(1);
                 }
 
-                if(item != null && item.ItemType == "Stone")
+                if(item != null && item.ItemCode == ItemCode.s)
                 {
                     //Cannot be damaged with blast
                 }
 
-                if (item != null && item.ItemType == "Vase")
+                if (item != null && ItemCode == ItemCode.v)
                 {
                     item.TakeDamage(1);
                 }

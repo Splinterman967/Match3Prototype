@@ -13,6 +13,8 @@ public class GridManager : MonoBehaviour
     public int height;
     public float cellSize;
 
+    public TextAsset levelData;
+
     public GameObject redCubePrefab;
     public GameObject greenCubePrefab;
     public GameObject blueCubePrefab;
@@ -41,26 +43,16 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        string json = @"{
-            ""level_number"": 1,
-            ""grid_width"": 9,
-            ""grid_height"": 10,
-            ""move_count"": 20,
-            ""grid"": [""bo"", ""bo"", ""bo"", ""s"", ""s"", ""s"", ""v"", ""v"", ""bo"", ""bo"", ""bo"", ""bo"", ""s"", ""s"", ""bo"", ""bo"", ""s"", ""bo"", ""bo"", ""bo"", ""v"", ""v"", ""bo"", ""v"", ""bo"", ""bo"", ""bo"", ""r"", ""r"", ""r"", ""r"", ""g"", ""b"", ""b"", ""b"", ""b"", ""y"", ""y"", ""y"", ""y"", ""g"", ""y"", ""y"", ""y"", ""y"", ""b"", ""b"", ""b"", ""b"", ""y"", ""r"", ""r"", ""r"", ""r"", ""rand"", ""rand"", ""rand"", ""rand"", ""y"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand"", ""rand""]
-        }";
-        InitializeGrid(json);
-    }
 
     void Update()
     {
         CheckClickedPositionIsInTheGrid();
-        UIManager.Instance.UpdateUI(moveCount);
+        //CheckObstacleCount();
+        UIManager.Instance.UpdateMoveCountUI(moveCount);
     }
 
     [Serializable]
-    private class LevelData
+    public class LevelData
     {
         public int level_number;
         public int grid_width;
@@ -251,6 +243,48 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    private void CheckWinCondition()
+    {
+        //CheckObstacleCount
+
+
+        int boxCount = 0;
+        int stoneCount = 0;
+        int vaseCount = 0;
+
+        //If Grid Initialized.
+        if (gridArray != null)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    ICellItem item = GetItemAt(x, y);
+
+                    if (item != null)
+                    {
+                        if (item.ItemCode == ItemCode.bo) { boxCount++; }
+                        if (item.ItemCode == ItemCode.s) { stoneCount++; }
+                        if (item.ItemCode == ItemCode.v) { vaseCount++; }
+                    }
+
+                }
+            }
+
+            int totalCount = boxCount + stoneCount + vaseCount;
+
+            if (totalCount == 0 && moveCount >= 0)
+            {
+                GameManager.Instance.TriggerWin();
+            }
+
+            else if (totalCount > 0 && moveCount == 1) 
+            {
+                GameManager.Instance.TriggerLose();
+            }
+        }
+
+    }
     private List<ICellItem> FindMatches(Vector2Int startIndex)
     {
         List<ICellItem> matches = new List<ICellItem>();
@@ -349,6 +383,22 @@ public class GridManager : MonoBehaviour
 
             isGridOccupied[x, y] = false;
         }
+
+        CheckWinCondition();
+    }
+
+    public void ResetGrid()
+    {
+             
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                ClearItemAt(x,y);
+            }
+        }
+
+        width = 0; height = 0;
     }
     // Utility methods
     public Vector3 GetNearestGridPos(Vector3 worldPosition) => GetGridPosition(GetGridIndex(worldPosition).x, GetGridIndex(worldPosition).y);

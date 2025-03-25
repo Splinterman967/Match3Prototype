@@ -5,7 +5,7 @@ public class Stone : MonoBehaviour, ICellItem
     private Vector2Int gridIndex;
 
     public GameObject GameObject => gameObject;
-    public string ItemType => "Stone";
+    public string ItemType => "Obstacle";
 
     [SerializeField] private ItemCode itemCode;
     public ItemCode ItemCode

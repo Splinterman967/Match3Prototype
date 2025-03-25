@@ -5,7 +5,7 @@ public class Vase : MonoBehaviour, ICellItem
     private Vector2Int gridIndex;
 
     public GameObject GameObject => gameObject;
-    public string ItemType => "Vase";
+    public string ItemType => "Obstacle";
 
 
     [SerializeField] private ItemCode itemCode;
@@ -45,16 +45,17 @@ public class Vase : MonoBehaviour, ICellItem
 
     public void DestroyItem()
     {
-        if (health == 1)
+         if (health <= 0)
+        {
+            GridManager.Instance.ClearItemAt(gridIndex.x, gridIndex.y);
+        }
+        else 
         {
             //Get the damaged state
             gameObject.transform.GetChild(0).gameObject.SetActive(false);
             gameObject.transform.GetChild(1).gameObject.SetActive(true);
         }
-        else if (health <= 0)
-        {
-            GridManager.Instance.ClearItemAt(gridIndex.x, gridIndex.y);
-        }
+      
     }
 
     public ICellItem[] GetNeighbours()

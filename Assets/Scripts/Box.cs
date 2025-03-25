@@ -5,7 +5,7 @@ public class Box : MonoBehaviour, ICellItem
     private Vector2Int gridIndex;
 
     public GameObject GameObject => gameObject;
-    public string ItemType => "Box";
+    public string ItemType => "Obstacle";
 
     [SerializeField] private ItemCode itemCode;
     public ItemCode ItemCode
