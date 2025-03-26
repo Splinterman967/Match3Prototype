@@ -18,7 +18,8 @@ public interface ICellItem
 
     void TakeDamage(int damage);
 
-    void DestroyItem();
-
     ICellItem[] GetNeighbours();
+    bool IsBeingDestroyed();
+
+    GameObject DestructionParticles { get; }
 }

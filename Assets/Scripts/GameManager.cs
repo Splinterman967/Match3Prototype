@@ -1,17 +1,17 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System;
+using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     private static GameManager instance;
     public static GameManager Instance => instance;
 
-    [SerializeField] private TextAsset[] levels;
-
+    [SerializeField] public TextAsset[] levels;
+    private GameState currentState;
     private int savedLevel;
 
-    // State machine enum
     public enum GameState
     {
         MainScene,
@@ -20,163 +20,180 @@ public class GameManager : MonoBehaviour
         GameLose
     }
 
-    // Current state
-    private GameState currentState;
     public GameState CurrentState => currentState;
+    void Start() => TriggerMainScene();
+
+    private bool isTransitioning = false; 
 
     void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (instance != null && instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
+        instance = this;
+        DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded; 
+        savedLevel = PlayerPrefs.GetInt("SavedLevelNumber", 0);
     }
 
-    void Start()
+    void OnDestroy()
     {
-         PlayerPrefs.SetInt("SavedLevelNumber", 0);
-        SetState(GameState.MainScene); 
+        SceneManager.sceneLoaded -= OnSceneLoaded; 
     }
 
-    void Update()
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        //// Handle state-specific logic
-        //switch (currentState)
-        //{
-        //    case GameState.MainScene:
-        //        // Main scene specific update logic if needed
-        //        break;
-
-        //    case GameState.LevelScene:
-        //        // Level scene specific update logic if needed
-        //        break;
-
-        //    case GameState.GameWin:
-        //        // Automatically transition back to MainScene after win
-        //        break;
-
-        //    case GameState.GameLose:
-        //        // Handle lose state logic if needed
-        //        break;
-        //}
+        if (scene.name == "MainScene")
+        {
+            UIManager.Instance.ActivateMainSceneUI(savedLevel);
+        }
+        else if (scene.name == "LevelScene")
+        {
+            LoadLevel(savedLevel);
+        }
     }
 
-    // Method to change states
     public void SetState(GameState newState)
     {
-        if (currentState == newState) return;
+        if (currentState == newState || isTransitioning) return;
+
+        GridManager.Instance.ResetGrid();
+
+        StartCoroutine(TransitionState(newState));
+    }
+
+    private IEnumerator TransitionState(GameState newState)
+    {
+        isTransitioning = true;
 
         // Exit current state
         switch (currentState)
         {
-            case GameState.MainScene:
-                OnMainSceneExit();
-                break;
             case GameState.LevelScene:
-                OnLevelSceneExit();
-                break;
-            case GameState.GameWin:
-                OnGameWinExit();
-                break;
-            case GameState.GameLose:
-                OnGameLoseExit();
                 break;
         }
 
         currentState = newState;
+        Debug.Log($"Transitioning to: {currentState}");
 
-        // Enter new state
+  
+        AsyncOperation asyncLoad;
         switch (currentState)
         {
             case GameState.MainScene:
-                OnMainSceneEnter();
+                asyncLoad = SceneManager.LoadSceneAsync("MainScene");
                 break;
+
             case GameState.LevelScene:
-                OnLevelSceneEnter();
+                asyncLoad = SceneManager.LoadSceneAsync("LevelScene");
                 break;
+
             case GameState.GameWin:
-                OnGameWinEnter();
-                break;
+                HandleWinCondition();
+                isTransitioning = false;
+                yield break;
+
             case GameState.GameLose:
-                OnGameLoseEnter();
-                break;
+                HandleLoseCondition();
+                isTransitioning = false;
+                yield break;
+
+            default:
+                isTransitioning = false;
+                yield break;
         }
 
-        Debug.Log(currentState);
+        // Wait until scene is fully loaded
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
+
+        isTransitioning = false;
     }
 
-    // State enter methods
-    private void OnMainSceneEnter()
+    private void LoadLevel(int levelIndex)
     {
-        SceneManager.LoadScene("MainScene");
-
-        UIManager.Instance.ActivateMainSceneUI();
-
-        GridManager.Instance.ResetGrid();
+        if (levelIndex >= 0 && levelIndex < levels.Length)
+        {
+            GridManager.Instance.InitializeGrid(levels[levelIndex].text);
+            UIManager.Instance.ActivateLevelSceneUI();
+        }
     }
 
-    private void OnLevelSceneEnter()
+    private void HandleWinCondition()
     {
-        SceneManager.LoadScene("LevelScene");
-        int savedLevel = PlayerPrefs.GetInt("SavedLevelNumber", 0);
-        string json = levels[savedLevel].text;
-
-        UIManager.Instance.ActivateLevelSceneUI();
-        GridManager.Instance.InitializeGrid(json);
-    }
-
-    private void OnGameWinEnter()
-    {
-        Debug.Log("Congratulations Level Finished");
-        PlayerPrefs.SetInt("SavedLevelNumber", PlayerPrefs.GetInt("SavedLevelNumber", 0) + 1);
-        GridManager.Instance.ResetGrid();
+        Debug.Log("Level Completed!");
+        PlayerPrefs.SetInt("SavedLevelNumber", Mathf.Min(savedLevel + 1, levels.Length - 1));
         UIManager.Instance.ActivateCelebrationPopup();
         Invoke(nameof(TriggerMainScene), 1.5f);
     }
 
-    private void OnGameLoseEnter()
+    private void HandleLoseCondition()
     {
-        Debug.Log("Failed to Finish the Level");
-        GridManager.Instance.ResetGrid();
+        Debug.Log("Level Failed");
         UIManager.Instance.ActivateFailScreenPopup();
     }
 
-
-    // Public methods to trigger state changes
-
-    private void TriggerMainScene()
+    public void CheckWinCondition()
     {
-        SetState(GameState.MainScene);
+        if (GridManager.Instance.gridArray == null) return;
+
+        int obstacleCount = 0;
+        bool hasMovesLeft = GridManager.Instance.moveCount > 0;
+
+        // Count all remaining obstacles
+        foreach (ICellItem item in GridManager.Instance.gridArray)
+        {
+            if (item != null && (item.ItemCode == ItemCode.bo || item.ItemCode == ItemCode.s || item.ItemCode == ItemCode.v))
+            {
+                obstacleCount++;
+            }
+        }
+        UIManager.Instance.UpdateRemainingObstacles(obstacleCount);
+        if (obstacleCount == 0 && hasMovesLeft)
+        {
+            TriggerWin();
+        }
+        else if (!hasMovesLeft)
+        {
+            TriggerLose();
+        }
     }
-    public void TriggerLevelScene()
+
+ 
+    public void TriggerMainScene() => SetState(GameState.MainScene);
+    public void TriggerLevelScene() => SetState(GameState.LevelScene);
+    public void TriggerWin() => SetState(GameState.GameWin);
+    public void TriggerLose() => SetState(GameState.GameLose);
+
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("Levels/Set Last Played Level")]
+    private static void SetLastPlayedLevel()
     {
-        SetState(GameState.LevelScene);
+        var window = UnityEditor.EditorWindow.GetWindow<LevelEditorWindow>("Set Level");
+        window.Show();
     }
 
-
-    // Public methods to trigger win/lose states
-    public void TriggerWin()
+    private class LevelEditorWindow : UnityEditor.EditorWindow
     {
-        SetState(GameState.GameWin);
+        private int selectedLevel = 0;
+
+        void OnGUI()
+        {
+            selectedLevel = UnityEditor.EditorGUILayout.IntSlider("Level Index", selectedLevel, 0, Instance.levels.Length - 1);
+
+            if (GUILayout.Button("Set"))
+            {
+                PlayerPrefs.SetInt("SavedLevelNumber", selectedLevel);
+                Instance.savedLevel = selectedLevel;
+                Instance.TriggerMainScene();
+                Close();
+            }
+        }
     }
-
-    public void TriggerLose()
-    {
-        SetState(GameState.GameLose);
-    }
-
-
-
-
-    // State exit methods (optional, add logic as needed)
-    private void OnMainSceneExit() { }
-    private void OnLevelSceneExit() { }
-    private void OnGameWinExit() { }
-    private void OnGameLoseExit() { }
+#endif
 }

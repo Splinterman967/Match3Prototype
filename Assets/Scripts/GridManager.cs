@@ -13,44 +13,22 @@ public class GridManager : MonoBehaviour
     public int height;
     public float cellSize;
 
-    public TextAsset levelData;
+    [SerializeField] private GameObject redCubePrefab;
+    [SerializeField] private GameObject greenCubePrefab;
+    [SerializeField] private GameObject blueCubePrefab;
+    [SerializeField] private GameObject yellowCubePrefab;
+    [SerializeField] private GameObject boxPrefab;
+    [SerializeField] private GameObject stonePrefab;
+    [SerializeField] private GameObject vasePrefab;
+    [SerializeField] private GameObject hRocketPrefab;
+    [SerializeField] private GameObject vRocketPrefab;
 
-    public GameObject redCubePrefab;
-    public GameObject greenCubePrefab;
-    public GameObject blueCubePrefab;
-    public GameObject yellowCubePrefab;
-    public GameObject boxPrefab;
-    public GameObject stonePrefab;
-    public GameObject vasePrefab;
-    public GameObject hRocketPrefab;
-    public GameObject vRocketPrefab;
-
-    private ICellItem[,] gridArray;
+    public ICellItem[,] gridArray;
+    public int moveCount;
+    public int ObstacleCount;
     private bool[,] isGridOccupied;
-    private int moveCount;
 
-    void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject); // Optional
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
-    }
-
-
-    void Update()
-    {
-        CheckClickedPositionIsInTheGrid();
-        //CheckObstacleCount();
-        UIManager.Instance.UpdateMoveCountUI(moveCount);
-    }
-
+    //For reading the level Json
     [Serializable]
     public class LevelData
     {
@@ -60,6 +38,26 @@ public class GridManager : MonoBehaviour
         public int move_count;
         public string[] grid;
     }
+
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
+
+    void Update()
+    {
+        CheckInput();
+
+    }
+
 
     public void InitializeGrid(string json)
     {
@@ -79,6 +77,8 @@ public class GridManager : MonoBehaviour
             int y = i / width;
             CreateItem(x, y, levelData.grid[i]);
         }
+        UIManager.Instance.UpdateMoveCountUI(moveCount);
+        GameManager.Instance.CheckWinCondition();
     }
 
     private void CreateItem(int x, int y, string itemCode)
@@ -141,175 +141,195 @@ public class GridManager : MonoBehaviour
         return item;
     }
 
-    private void CheckClickedPositionIsInTheGrid()
+    private float inputCooldown = 0.2f;
+    private bool isInputAllowed = true;
+
+    private void CheckInput()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (!isInputAllowed || !Input.GetMouseButtonDown(0)) return;
+
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2Int gridIndex = GetGridIndex(mousePosition);
+
+        if (!IsInTheGrid(mousePosition))
         {
-            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-            Vector2Int gridIndex = GetGridIndex(mousePosition);
-
-            if (IsInTheGrid(mousePosition))
-            {
-                ICellItem clickedItem = GetItemAt(gridIndex.x, gridIndex.y);
-
-                if (clickedItem != null)
-                {
-                    clickedItem.OnTapped();
-
-                    //When Cube Clicked
-                    if (clickedItem.ItemType == "Cube")
-                    {
-                        List<ICellItem> matches = FindMatches(gridIndex);
-                        if (matches.Count >= 2)
-                        {
-                            clickedItem.GameObject.GetComponent<Cube>().OnBlast();
-
-                            foreach (ICellItem match in matches)
-                            {
-                                match.GameObject.GetComponent<Cube>().OnBlast();
-
-                                match.TakeDamage(1);
-                                //ClearItemAt(match.GridIndex.x, match.GridIndex.y);
-
-
-                            }
-                            moveCount--;
-                        }
-
-                        if (matches.Count >= 4)
-                        {
-                            int randomIndex = UnityEngine.Random.Range(0, 2);
-
-                            if (randomIndex == 0)
-                            {
-                                CreateItem(gridIndex.x, gridIndex.y, "hro");
-
-                            }
-                            else if (randomIndex == 1)
-                            {
-                                CreateItem(gridIndex.x, gridIndex.y, "vro");
-                            }
-
-                        }
-
-
-                    }
-
-                    //When Rocket Clicked
-                    else if (clickedItem.ItemCode == ItemCode.hro || clickedItem.ItemCode == ItemCode.vro)
-                    {
-                        if (clickedItem.ItemCode == ItemCode.hro)
-                        {
-                            //Horizontal Rocket
-                            int Row = gridIndex.y;
-
-                            for (int x = 0; x < width; x++)
-                            {
-                                ICellItem item = GetItemAt(x, Row);
-                                if (item != null)
-                                {
-                                    item.TakeDamage(1);
-                                }
-
-                            }
-                        }
-
-                        else if (clickedItem.ItemCode == ItemCode.vro)
-                        {
-                            //VerticalRocket
-                            int Cloumn = gridIndex.x;
-
-                            for (int y = 0; y < height; y++)
-                            {
-                                ICellItem item = GetItemAt(Cloumn, y);
-                                if (item != null)
-                                {
-                                    item.TakeDamage(1);
-                                }
-                            }
-                        }
-
-                        moveCount--;
-                    }
-                }
-
-                Fall();
-            }
-            else
-            {
-                Debug.Log("Clicked outside the grid.");
-            }
+            Debug.Log("Clicked outside the grid.");
+            return;
         }
+
+        StartCoroutine(HandleInputWithCooldown(gridIndex));
     }
 
-    private void CheckWinCondition()
+    private IEnumerator HandleInputWithCooldown(Vector2Int gridIndex)
     {
-        //CheckObstacleCount
+        isInputAllowed = false;
 
-
-        int boxCount = 0;
-        int stoneCount = 0;
-        int vaseCount = 0;
-
-        //If Grid Initialized.
-        if (gridArray != null)
+        ICellItem clickedItem = GetItemAt(gridIndex.x, gridIndex.y);
+        if (clickedItem != null)
         {
-            for (int x = 0; x < width; x++)
+            yield return HandleItemClick(clickedItem, gridIndex);
+        }
+
+        yield return new WaitForSeconds(inputCooldown);
+        isInputAllowed = true;
+    }
+
+    private IEnumerator HandleItemClick(ICellItem clickedItem, Vector2Int gridIndex)
+    {
+        clickedItem.OnTapped();
+
+        switch (clickedItem)
+        {
+            case Cube _:
+                yield return HandleCubeClick(gridIndex, (Cube)clickedItem);
+                break;
+
+            case Rocket rocket:
+                yield return HandleRocketClick(gridIndex, rocket);
+                break;
+            default:
+                Debug.Log($"No special handling for {clickedItem.GetType()}");
+                break;
+        }
+
+        // Update game state after any interaction
+        yield return StartCoroutine(Fall(() => {
+            UIManager.Instance.UpdateMoveCountUI(moveCount);
+            GameManager.Instance.CheckWinCondition();
+        }));
+    }
+
+    private IEnumerator HandleCubeClick(Vector2Int gridIndex, Cube clickedCube)
+    {
+        List<ICellItem> matches = FindMatches(gridIndex);
+
+        if (matches.Count >= 2)
+        {
+            // First damage adjacent obstacles from each matched cube
+            foreach (ICellItem match in matches)
             {
-                for (int y = 0; y < height; y++)
+                if (match is Cube cube)
                 {
-                    ICellItem item = GetItemAt(x, y);
-
-                    if (item != null)
+                    // Damage adjacent obstacles
+                    ICellItem[] neighbors = cube.GetNeighbours();
+                    foreach (ICellItem neighbor in neighbors)
                     {
-                        if (item.ItemCode == ItemCode.bo) { boxCount++; }
-                        if (item.ItemCode == ItemCode.s) { stoneCount++; }
-                        if (item.ItemCode == ItemCode.v) { vaseCount++; }
+                        if (neighbor != null &&
+                            (neighbor.ItemCode == ItemCode.bo || neighbor.ItemCode == ItemCode.v))
+                        {
+                            neighbor.TakeDamage(1);
+                        }
                     }
-
                 }
             }
 
-            int totalCount = boxCount + stoneCount + vaseCount;
-
-            if (totalCount == 0 && moveCount >= 0)
+            // Then clear all matched items
+            foreach (ICellItem match in matches)
             {
-                GameManager.Instance.TriggerWin();
+                ClearItemAt(match.GridIndex.x, match.GridIndex.y, false);
             }
 
-            else if (totalCount > 0 && moveCount == 1) 
+            // Wait one frame to ensure grid is cleared
+            yield return null;
+
+            // Then check for special item creation
+            if (matches.Count >= 4 && gridArray[gridIndex.x, gridIndex.y] == null)
             {
-                GameManager.Instance.TriggerLose();
+                CreateRocketItem(gridIndex, matches.Count);
             }
+
+            moveCount--;
+
+            // Reset damage tracking for vases after blast
+            foreach (ICellItem item in gridArray)
+            {
+                if (item is Vase vase)
+                {
+                    vase.ResetDamageTracking();
+                }
+            }
+
+            yield return StartCoroutine(Fall(() => {
+                UIManager.Instance.UpdateMoveCountUI(moveCount);
+                GameManager.Instance.CheckWinCondition();
+            }));
         }
-
     }
+
+    private IEnumerator HandleRocketClick(Vector2Int gridIndex, Rocket rocket)
+    {
+        rocket.OnTapped(); 
+        moveCount--;
+
+        // Wait for rocket animation to complete
+        yield return new WaitForSeconds(0.5f);
+
+        yield return StartCoroutine(Fall(() => {
+            UIManager.Instance.UpdateMoveCountUI(moveCount);
+            GameManager.Instance.CheckWinCondition();
+        }));
+    }
+
+   private void CreateRocketItem(Vector2Int position, int matchCount)
+{
+    if (!IsValidPosition(position.x, position.y) || gridArray[position.x, position.y] != null)
+        return;
+
+    string specialItemCode = null;
+
+    if (matchCount >= 4)
+    {
+        specialItemCode = UnityEngine.Random.Range(0, 2) == 0 ? "hro" : "vro";
+        CreateItem(position.x, position.y, specialItemCode);
+        
+        // Animate the new rocket
+        ICellItem newRocket = GetItemAt(position.x, position.y);
+        if (newRocket != null)
+        {
+            newRocket.GameObject.transform.localScale = Vector3.zero;
+            newRocket.GameObject.transform
+                .DOScale(1f, 0.3f)
+                .SetEase(Ease.OutBack);
+        }
+    }
+}
     private List<ICellItem> FindMatches(Vector2Int startIndex)
     {
         List<ICellItem> matches = new List<ICellItem>();
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
         HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
-        ItemCode targetColor = GetItemAt(startIndex.x, startIndex.y)?.GameObject.GetComponent<Cube>().ItemCode ?? ItemCode.r;
 
-        void CheckCell(int x, int y)
+        ICellItem startItem = GetItemAt(startIndex.x, startIndex.y);
+        if (startItem?.ItemType != "Cube") return matches;
+
+        ItemCode targetColor = startItem.GameObject.GetComponent<Cube>().ItemCode;
+        queue.Enqueue(startIndex);
+
+        while (queue.Count > 0)
         {
-            if (!IsValidPosition(x, y) || visited.Contains(new Vector2Int(x, y))) return;
-            ICellItem item = GetItemAt(x, y);
-            if (item != null && item.ItemType == "Cube" && item.GameObject.GetComponent<Cube>().ItemCode == targetColor)
+            Vector2Int current = queue.Dequeue();
+            if (!IsValidPosition(current.x, current.y) || visited.Contains(current)) continue;
+
+            ICellItem item = GetItemAt(current.x, current.y);
+            if (item?.ItemType == "Cube" && item.GameObject.GetComponent<Cube>().ItemCode == targetColor)
             {
                 matches.Add(item);
-                visited.Add(new Vector2Int(x, y));
-                CheckCell(x + 1, y); CheckCell(x - 1, y); CheckCell(x, y + 1); CheckCell(x, y - 1);
+                visited.Add(current);
+
+                // Enqueue neighbors
+                queue.Enqueue(new Vector2Int(current.x + 1, current.y));
+                queue.Enqueue(new Vector2Int(current.x - 1, current.y));
+                queue.Enqueue(new Vector2Int(current.x, current.y + 1));
+                queue.Enqueue(new Vector2Int(current.x, current.y - 1));
             }
         }
-
-        CheckCell(startIndex.x, startIndex.y);
         return matches;
     }
-
-    public void Fall()
+    public IEnumerator Fall(Action onComplete)
     {
         float duration = 0.5f; // Animation duration in seconds
+
+        List<Tween> activeTweens = new List<Tween>();
 
         // Step 1: Move existing items down
         for (int x = 0; x < width; x++)
@@ -326,9 +346,9 @@ public class GridManager : MonoBehaviour
                 {
 
                     Vector3 targetPos = GetGridPosition(x, bottomEmptyY);
-                    // Animate movement with DOTween
+   
                     item.GameObject.transform.DOMove(targetPos, duration).SetEase(Ease.OutQuad);
-                    // Update grid immediately
+            
 
                     gridArray[x, bottomEmptyY] = item;
                     gridArray[x, y] = null;
@@ -362,6 +382,13 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+
+        foreach (Tween tween in activeTweens)
+        {
+            yield return tween.WaitForCompletion();
+        }
+
+        onComplete?.Invoke();
     }
 
     public void SetItemAt(int x, int y, ICellItem item)
@@ -370,44 +397,87 @@ public class GridManager : MonoBehaviour
         {
             gridArray[x, y] = item;
             isGridOccupied[x, y] = (item != null);
-            if (item != null) { item.GridIndex = new Vector2Int(x, y); item.GameObject.transform.position = GetGridPosition(x, y); item.GameObject.name = $"GridItem_{x}_{y}"; }
+            if (item != null) { item.GridIndex = new Vector2Int(x, y); item.GameObject.transform.position = GetGridPosition(x, y); }
+
+            // item.GameObject.name = $"GridItem_{x}_{y}"
         }
     }
-    public void ClearItemAt(int x, int y)
+    public void ClearItemAt(int x, int y, bool immediateFall = true)
     {
-        if (IsValidPosition(x, y) && gridArray[x, y] != null)
-        {
-            //Destroy(gridArray[x, y].GameObject); // Fully destroy the GameObject
-            gridArray[x, y].GameObject.SetActive(false);
-            gridArray[x, y] = null;
+        if (!IsValidPosition(x, y)) return;
 
-            isGridOccupied[x, y] = false;
+        ICellItem item = gridArray[x, y];
+        if (item != null && item.ItemType != "Rocket") // Skip particle effects for rockets
+        {
+            if (item.DestructionParticles != null)
+            {
+                GameObject particles = Instantiate(
+                    item.DestructionParticles,
+                    GetGridPosition(x, y),
+                    Quaternion.identity
+                );
+
+                ParticleSystem[] allParticles = particles.GetComponentsInChildren<ParticleSystem>();
+                foreach (ParticleSystem ps in allParticles)
+                {
+                    ps.Play();
+                }
+
+                ParticleSystem mainParticle = particles.GetComponent<ParticleSystem>();
+                float duration = mainParticle != null ? mainParticle.main.duration : 1f;
+                Destroy(particles, duration);
+            }
+
+            Destroy(item.GameObject);
         }
 
-        CheckWinCondition();
+        gridArray[x, y] = null;
+        isGridOccupied[x, y] = false;
+
+        if (immediateFall)
+        {
+            StartCoroutine(Fall(() => {
+                UIManager.Instance.UpdateMoveCountUI(moveCount);
+                GameManager.Instance.CheckWinCondition();
+            }));
+        }
     }
+
 
     public void ResetGrid()
     {
-             
+        if (gridArray == null) return;
+
+        // First pass: Clear all items
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                ClearItemAt(x,y);
+                if (gridArray[x, y] != null)
+                {
+                    // Safely destroy the game object
+                    if (gridArray[x, y].GameObject != null)
+                    {
+                        Destroy(gridArray[x, y].GameObject);
+                    }
+                    gridArray[x, y] = null;
+                    isGridOccupied[x, y] = false;
+                }
             }
         }
 
-        width = 0; height = 0;
+        // Second pass: Reset grid data
+        gridArray = new ICellItem[0, 0];
+        isGridOccupied = new bool[0, 0];
+        width = 0;
+        height = 0;
+
     }
     // Utility methods
-    public Vector3 GetNearestGridPos(Vector3 worldPosition) => GetGridPosition(GetGridIndex(worldPosition).x, GetGridIndex(worldPosition).y);
-    private void OccupyGrid(Vector2Int gridIndex) { if (IsValidPosition(gridIndex.x, gridIndex.y)) isGridOccupied[gridIndex.x, gridIndex.y] = true; }
-    public void UnOccupyGrid(Vector3 position) { Vector2Int gridIndex = GetGridIndex(position); if (IsValidPosition(gridIndex.x, gridIndex.y)) isGridOccupied[gridIndex.x, gridIndex.y] = false; }
     public bool IsGridAvailable(Vector3 position) { Vector2Int gridIndex = GetGridIndex(position); return IsInTheGrid(position) && !isGridOccupied[gridIndex.x, gridIndex.y]; }
     public bool IsInTheGrid(Vector3 position) { Vector2Int gridIndex = GetGridIndex(position); return IsValidPosition(gridIndex.x, gridIndex.y); }
     public ICellItem GetItemAt(int x, int y) => IsValidPosition(x, y) ? gridArray[x, y] : null;
-    private bool IsValidPosition(int x, int y) => x >= 0 && x < width && y >= 0 && y < height;
+    public bool IsValidPosition(int x, int y) => x >= 0 && x < width && y >= 0 && y < height;
     public Vector2Int GetGridIndex(Vector3 worldPosition) => new Vector2Int(Mathf.FloorToInt((worldPosition - transform.position).x / cellSize), Mathf.FloorToInt((worldPosition - transform.position).y / cellSize));
     public Vector3 GetGridPosition(int x, int y) => transform.position + new Vector3(x * cellSize, y * cellSize, 0);
 

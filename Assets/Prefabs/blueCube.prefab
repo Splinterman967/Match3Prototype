@@ -101,4 +101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemCode: 2
-  cubeParticle: {fileID: 1939124802205211871, guid: 73efe89874b9f5344b358c853f20f291, type: 3}
+  health: 1
+  destructionParticles: {fileID: 6658892164841436919, guid: 73efe89874b9f5344b358c853f20f291, type: 3}
+  tapScaleAmount: 1.2
+  tapScaleDuration: 0.1

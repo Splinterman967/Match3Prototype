@@ -1,63 +1,46 @@
+using DG.Tweening;
 using UnityEngine;
 
 public class Box : MonoBehaviour, ICellItem
 {
+    [Header("Settings")]
+    [SerializeField] private ItemCode itemCode = ItemCode.bo;
+    [SerializeField] private GameObject destructionParticles;
+
     private Vector2Int gridIndex;
+    private bool isBeingDestroyed;
 
     public GameObject GameObject => gameObject;
     public string ItemType => "Obstacle";
+    public ItemCode ItemCode { get => itemCode; set => itemCode = value; }
+    public Vector2Int GridIndex { get => gridIndex; set => gridIndex = value; }
+    public int Health { get => 1; set { } } 
+    public bool IsBeingDestroyed() => isBeingDestroyed;
+    public GameObject DestructionParticles => destructionParticles;
 
-    [SerializeField] private ItemCode itemCode;
-    public ItemCode ItemCode
-    {
-        get => itemCode;
-        set => itemCode = value;
-    }
-    public Vector2Int GridIndex
-    {
-        get => gridIndex;
-        set => gridIndex = value;
-    }
-    private int health = 1;
-    public int Health
-    {
-        get => health;
-        set => health = value;
-    }
     public void OnTapped()
     {
-        Debug.Log($"Box at {gridIndex} tapped!");
-        // Boxes don’t blast, so no action here (damage comes from adjacent blasts)
+        if (isBeingDestroyed) return;
+        transform.DOScale(1.2f, 0.1f).SetLoops(2, LoopType.Yoyo);
     }
 
-    public bool CanFall()
-    {
-        return false; // Boxes don’t fall
-    }
+    public bool CanFall() => true; 
 
     public void TakeDamage(int damage)
     {
-        health -= damage;
-        DestroyItem();
-    }
-
-    public void DestroyItem()
-    {
-        if (health <= 0)
-        {
-            GridManager.Instance.ClearItemAt(gridIndex.x, gridIndex.y);
-        }
+        if (isBeingDestroyed) return;
+        isBeingDestroyed = true;
+        GridManager.Instance.ClearItemAt(gridIndex.x, gridIndex.y);
     }
 
     public ICellItem[] GetNeighbours()
     {
-        //Get the neighbours 
-        ICellItem[] neighbourItems = { GridManager.Instance.GetItemAt(gridIndex.x + 1, gridIndex.y), GridManager.Instance.GetItemAt(gridIndex.x - 1, gridIndex.y)
-                    , GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y + 1) , GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y - 1) };
-
-        return neighbourItems;
+        return new ICellItem[4]
+        {
+            GridManager.Instance.GetItemAt(gridIndex.x + 1, gridIndex.y),
+            GridManager.Instance.GetItemAt(gridIndex.x - 1, gridIndex.y),
+            GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y + 1),
+            GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y - 1)
+        };
     }
-
-
-   
 }

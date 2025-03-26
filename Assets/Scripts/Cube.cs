@@ -1,97 +1,74 @@
+using DG.Tweening;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 public class Cube : MonoBehaviour, ICellItem
 {
-    private Vector2Int gridIndex;
-    private int health=1;
-    
+    [Header("Settings")]
     [SerializeField] private ItemCode itemCode;
-    public ItemCode ItemCode
-    {
-        get => itemCode;
-        set => itemCode = value;
-    }
-    public ParticleSystem cubeParticle;
+    [SerializeField] private int health = 1;
+    [SerializeField] private GameObject destructionParticles;
+
+    [Header("Animation")]
+    [SerializeField] private float tapScaleAmount = 1.2f;
+    [SerializeField] private float tapScaleDuration = 0.1f;
+
+    private Vector2Int gridIndex;
+    private bool isBeingDestroyed;
+
     public GameObject GameObject => gameObject;
     public string ItemType => "Cube";
-
-
-    public Vector2Int GridIndex
-    {
-        get => gridIndex;
-        set => gridIndex = value;
-    }
-    public int Health
-    {
-        get => health;
-        set => health = value;
-    }
+    public ItemCode ItemCode { get => itemCode; set => itemCode = value; }
+    public Vector2Int GridIndex { get => gridIndex; set => gridIndex = value; }
+    public int Health { get => health; set => health = value; }
+    public bool IsBeingDestroyed() => isBeingDestroyed;
+    public GameObject DestructionParticles => destructionParticles;
 
     public void OnTapped()
     {
-        Debug.Log($"Cube at {gridIndex} tapped! cube color : {itemCode} ");
-        // Later: Trigger match detection here
+        if (isBeingDestroyed) return;
+        transform.DOScale(tapScaleAmount, tapScaleDuration).SetLoops(2, LoopType.Yoyo);
     }
+
     public void OnBlast()
     {
-        ICellItem[] neihbours = GetNeighbours();
+        if (isBeingDestroyed) return;
 
-        if (neihbours != null)
+        // Damage adjacent obstacles
+        ICellItem[] neighbors = GetNeighbours();
+        foreach (ICellItem neighbor in neighbors)
         {
-            foreach (ICellItem item in neihbours)
+            if (neighbor != null &&
+                (neighbor.ItemCode == ItemCode.bo || neighbor.ItemCode == ItemCode.v))
             {
-                if (item != null && item.ItemCode==ItemCode.bo)
-                {
-                    item.TakeDamage(1);
-                }
-
-                if(item != null && item.ItemCode == ItemCode.s)
-                {
-                    //Cannot be damaged with blast
-                }
-
-                if (item != null && ItemCode == ItemCode.v)
-                {
-                    item.TakeDamage(1);
-                }
+                neighbor.TakeDamage(1);
             }
         }
+
+        TakeDamage(1);
     }
 
-    public bool CanFall()
-    {
-        return true;
-    }
+    public bool CanFall() => !isBeingDestroyed;
 
     public void TakeDamage(int damage)
     {
+        if (isBeingDestroyed) return;
+
         health -= damage;
-        DestroyItem();
-    }
-
-    public void DestroyItem()
-    {
-        if (health <= 0) 
+        if (health <= 0)
         {
-            if (cubeParticle != null)
-            {
-                Instantiate(cubeParticle, GridManager.Instance.GetGridPosition(gridIndex.x,gridIndex.y),Quaternion.identity);
-
-            }
-           GridManager.Instance.ClearItemAt(gridIndex.x,gridIndex.y);
+            isBeingDestroyed = true;
+            GridManager.Instance.ClearItemAt(gridIndex.x, gridIndex.y);
         }
     }
 
-
     public ICellItem[] GetNeighbours()
     {
-        //Get the neighbours 
-        ICellItem[] neighbourItems = { GridManager.Instance.GetItemAt(gridIndex.x + 1, gridIndex.y), GridManager.Instance.GetItemAt(gridIndex.x - 1, gridIndex.y)
-                    , GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y + 1) , GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y - 1) };
-
-        return neighbourItems;
-
+        return new ICellItem[4]
+        {
+            GridManager.Instance.GetItemAt(gridIndex.x + 1, gridIndex.y),
+            GridManager.Instance.GetItemAt(gridIndex.x - 1, gridIndex.y),
+            GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y + 1),
+            GridManager.Instance.GetItemAt(gridIndex.x, gridIndex.y - 1)
+        };
     }
-
 }

@@ -100,5 +100,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd1784f250ff6ef499e3e15596f073be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeColor: 0
-  cubeParticle: {fileID: 3899804581368104820, guid: cb8233f209952ec40a17ee681b005351, type: 3}
+  itemCode: 0
+  health: 1
+  destructionParticles: {fileID: 4481740739182636233, guid: cb8233f209952ec40a17ee681b005351, type: 3}
+  tapScaleAmount: 1.2
+  tapScaleDuration: 0.1

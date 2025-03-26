@@ -1,5 +1,7 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
@@ -7,73 +9,100 @@ public class UIManager : MonoBehaviour
     private static UIManager instance;
     public static UIManager Instance => instance;
 
-    [SerializeField] private TextMeshProUGUI moveCount;
+    [Header("UI References")]
+    [SerializeField] private TextMeshProUGUI moveCountText;
     [SerializeField] private Button levelButton;
+    [SerializeField] private TextMeshProUGUI levelButtonText;
+    [SerializeField] private TextMeshProUGUI obstacleCountText;
+
+    [Header("Panels")]
+    [SerializeField] private GameObject celebrationPanel;
+    [SerializeField] private GameObject failedPanel;
+    [SerializeField] private GameObject mainScenePanel;
+    [SerializeField] private GameObject levelScenePanel;
 
 
-    [SerializeField] private GameObject CelebrationPanel;
-    [SerializeField] private GameObject FailedPanel;
-    [SerializeField] private GameObject MainScenePanel;
-    [SerializeField] private GameObject LevelScenePanel;
     void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject); // Optional
-        }
-        else
+        if (instance != null && instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
+        instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    public void ActivateMainSceneUI()
+    private void InitializeUI()
     {
-        MainScenePanel.SetActive(true);
-        LevelScenePanel.SetActive(false);
-
-        CelebrationPanel.SetActive(false);
-        FailedPanel.SetActive(false);
+        UpdateLevelButtonText();
+    }
+    
+    public void UpdateLevelButtonText()
+    {
+        if (levelButtonText == null) return;
 
         int savedLevel = PlayerPrefs.GetInt("SavedLevelNumber", 0);
-        levelButton.GetComponentInChildren<TextMeshProUGUI>().text = $"Level {savedLevel +1}";
-
+        levelButtonText.text = savedLevel >= GameManager.Instance.levels.Length ?
+            "Finished" : $"Level {savedLevel + 1}";
     }
 
+    public void ActivateMainSceneUI(int currentLevel)
+    {
+        // Ensure we're in the main scene
+        if (SceneManager.GetActiveScene().name != "MainScene")
+            return;
+
+        StartCoroutine(DelayedUIActivation(true, false, false, false));
+        UpdateLevelButtonText();
+    }
 
     public void ActivateLevelSceneUI()
     {
-        LevelScenePanel.SetActive(true);
-        MainScenePanel.SetActive(false);
+        // Ensure we're in the level scene
+        if (SceneManager.GetActiveScene().name != "LevelScene")
+            return;
 
-        CelebrationPanel.SetActive(false);
-        FailedPanel.SetActive(false);
+        StartCoroutine(DelayedUIActivation(false, true, false, false));
     }
+    public void ActivateCelebrationPopup() => SetPanelStates(celebration: true);
 
-    public void ActivateCelebrationPopup()
+    public void ActivateFailScreenPopup() => SetPanelStates(failed: true);
+
+    public void UpdateMoveCountUI(int movesLeft)
     {
-        CelebrationPanel.SetActive(true);
-        FailedPanel.SetActive(false);
+        if (moveCountText != null)
+        {
+            moveCountText.text = movesLeft.ToString();
+        }
+      
     }
 
-
-    public void ActivateFailScreenPopup()
+    public void UpdateRemainingObstacles(int obstacleCount)
     {
-        FailedPanel.SetActive(true);
-        CelebrationPanel.SetActive(false);
+        if (obstacleCountText != null)
+        {
+            obstacleCountText.text = obstacleCount.ToString();
+        }
     }
-
-    public void UpdateMoveCountUI(int moveLeft)
+    private void SetPanelStates(bool main = false, bool level = false,
+                              bool celebration = false, bool failed = false)
     {
-        if (moveCount != null) { moveCount.text = moveLeft.ToString(); }
-
+        mainScenePanel.SetActive(main);
+        levelScenePanel.SetActive(level);
+        celebrationPanel.SetActive(celebration);
+        failedPanel.SetActive(failed);
     }
- 
-  
-   
 
+    private IEnumerator DelayedUIActivation(bool main, bool level, bool celebration, bool failed)
+    {
+        // Wait one frame to ensure everything is initialized
+        yield return null;
 
-
+        mainScenePanel.SetActive(main);
+        levelScenePanel.SetActive(level);
+        celebrationPanel.SetActive(celebration);
+        failedPanel.SetActive(failed);
+    }
 }

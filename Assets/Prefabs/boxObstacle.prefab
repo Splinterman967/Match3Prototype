@@ -101,3 +101,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemCode: 6
+  health: 1
+  destructionParticles: {fileID: 3729378856629993432, guid: ccfae4a6ccb51c64a8b031cc775a121e, type: 3}
